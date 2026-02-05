@@ -10,7 +10,7 @@ export interface DecodedToken extends JwtPayload, TokenPayload {}
 
 export function generateToken(payload: TokenPayload): string {
   const options: SignOptions = {
-    expiresIn: env.JWT_EXPIRES_IN,
+    expiresIn: env.JWT_EXPIRES_IN as SignOptions['expiresIn'],
     algorithm: 'HS256',
   };
 
