@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskTracker - Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+    .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+    header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    header h1 { font-size: 24px; }
+    .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-danger { background: #dc2626; color: white; }
+    .btn-danger:hover { background: #b91c1c; }
+    .btn-secondary { background: #6b7280; color: white; }
+    .btn-secondary:hover { background: #4b5563; }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+
+    /* Auth forms */
+    #auth-section { max-width: 400px; margin: 80px auto; }
+    .auth-form { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .auth-form h2 { margin-bottom: 16px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; margin-bottom: 4px; font-size: 14px; font-weight: 500; }
+    .form-group input, .form-group select, .form-group textarea {
+      width: 100%; padding: 8px 12px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 14px;
+    }
+    .auth-toggle { text-align: center; margin-top: 12px; font-size: 14px; }
+    .auth-toggle a { color: #2563eb; cursor: pointer; text-decoration: underline; }
+
+    /* Dashboard */
+    #dashboard-section { display: none; }
+    .card { background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 16px; }
+    .task-list { list-style: none; }
+    .task-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #e5e7eb; }
+    .task-item:last-child { border-bottom: none; }
+    .task-info h3 { font-size: 16px; margin-bottom: 4px; }
+    .task-meta { font-size: 12px; color: #6b7280; }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .badge-pending { background: #fef3c7; color: #92400e; }
+    .badge-in-progress { background: #dbeafe; color: #1e40af; }
+    .badge-completed { background: #d1fae5; color: #065f46; }
+    .badge-low { background: #e5e7eb; color: #374151; }
+    .badge-medium { background: #fef3c7; color: #92400e; }
+    .badge-high { background: #fee2e2; color: #991b1b; }
+    .task-actions { display: flex; gap: 6px; }
+
+    /* Modal */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+    .modal-overlay.active { display: flex; }
+    .modal { background: white; border-radius: 8px; padding: 24px; width: 90%; max-width: 500px; }
+    .modal h2 { margin-bottom: 16px; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+    /* Messages */
+    .message { padding: 10px 16px; border-radius: 4px; margin-bottom: 12px; font-size: 14px; }
+    .message-success { background: #d1fae5; color: #065f46; }
+    .message-error { background: #fee2e2; color: #991b1b; }
+    .empty-state { text-align: center; padding: 40px; color: #9ca3af; }
+    .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <!-- Auth Section -->
+  <div id="auth-section">
+    <div class="auth-form">
+      <h2 id="auth-title">Login</h2>
+      <div id="auth-message"></div>
+      <form id="auth-form">
+        <div class="form-group" id="name-group" style="display:none">
+          <label for="auth-name">Name</label>
+          <input type="text" id="auth-name" placeholder="Your name">
+        </div>
+        <div class="form-group">
+          <label for="auth-email">Email</label>
+          <input type="email" id="auth-email" placeholder="you@example.com" required>
+        </div>
+        <div class="form-group">
+          <label for="auth-password">Password</label>
+          <input type="password" id="auth-password" placeholder="Password" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%" id="auth-submit">Login</button>
+      </form>
+      <div class="auth-toggle">
+        <span id="auth-toggle-text">Don't have an account? </span>
+        <a id="auth-toggle-link" onclick="toggleAuthMode()">Register</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div id="dashboard-section" class="container">
+    <header>
+      <h1>TaskTracker</h1>
+      <div>
+        <span id="user-email" style="margin-right: 12px; font-size: 14px; color: #6b7280;"></span>
+        <button class="btn btn-primary" onclick="openCreateModal()">+ New Task</button>
+        <button class="btn btn-secondary" onclick="logout()" style="margin-left: 8px;">Logout</button>
+      </div>
+    </header>
+
+    <div id="dashboard-message"></div>
+
+    <div class="card">
+      <h2 style="margin-bottom: 16px;">My Tasks</h2>
+      <div id="task-list-container">
+        <div class="empty-state">Loading tasks...</div>
+      </div>
+      <div id="pagination" class="pagination"></div>
+    </div>
+  </div>
+
+  <!-- Create/Edit Task Modal -->
+  <div class="modal-overlay" id="task-modal">
+    <div class="modal">
+      <h2 id="modal-title">Create Task</h2>
+      <div id="modal-message"></div>
+      <form id="task-form">
+        <div class="form-group">
+          <label for="task-title">Title</label>
+          <input type="text" id="task-title" placeholder="Task title" required maxlength="200">
+        </div>
+        <div class="form-group">
+          <label for="task-description">Description</label>
+          <textarea id="task-description" rows="3" placeholder="Optional description" maxlength="2000"></textarea>
+        </div>
+        <div class="form-group">
+          <label for="task-priority">Priority</label>
+          <select id="task-priority">
+            <option value="LOW">Low</option>
+            <option value="MEDIUM" selected>Medium</option>
+            <option value="HIGH">High</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="task-status">Status</label>
+          <select id="task-status">
+            <option value="PENDING" selected>Pending</option>
+            <option value="IN_PROGRESS">In Progress</option>
+            <option value="COMPLETED">Completed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="task-due-date">Due Date (optional)</label>
+          <input type="datetime-local" id="task-due-date">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="modal-submit">Create Task</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>
