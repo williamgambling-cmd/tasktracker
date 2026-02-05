@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { tasksApi } from '../services/api';
 import TaskCard from '../components/TaskCard';
 
@@ -18,6 +18,7 @@ const PRIORITY_OPTIONS = [
 ];
 
 export default function Tasks() {
+  const location = useLocation();
   const [tasks, setTasks] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -59,7 +60,11 @@ export default function Tasks() {
 
   useEffect(() => {
     fetchTasks();
-  }, [statusFilter, priorityFilter, page]);
+    // Clear the refresh state after fetching to prevent refetch on re-renders
+    if (location.state?.refresh) {
+      window.history.replaceState({}, '');
+    }
+  }, [statusFilter, priorityFilter, page, location.state?.refresh]);
 
   const handleSearch = (e) => {
     e.preventDefault();

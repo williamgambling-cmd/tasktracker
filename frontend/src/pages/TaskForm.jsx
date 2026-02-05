@@ -80,7 +80,7 @@ export default function TaskForm() {
         await tasksApi.create(data);
       }
 
-      navigate('/tasks');
+      navigate('/tasks', { state: { refresh: true } });
     } catch (err) {
       setError(err.response?.data?.error || `Failed to ${isEditing ? 'update' : 'create'} task`);
     } finally {
