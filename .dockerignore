@@ -9,6 +9,4 @@ coverage
 tests
 jest.config.js
 .eslintrc.js
-tsconfig.json
-src
 README.md
