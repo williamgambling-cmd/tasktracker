@@ -13,8 +13,11 @@ interface ValidationConfig {
 export function validate(schema: ZodSchema, target: ValidationTarget = 'body') {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const data = req[target];
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       const validated = schema.parse(data);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       req[target] = validated;
       next();
     } catch (error) {
@@ -41,7 +44,9 @@ export function validateRequest(config: ValidationConfig) {
       const schema = config[target];
       if (schema) {
         try {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           const validated = schema.parse(req[target]);
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           req[target] = validated;
         } catch (error) {
           if (error instanceof ZodError) {

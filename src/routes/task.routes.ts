@@ -13,6 +13,7 @@ import {
 } from '../controllers/task.controller';
 import { authenticate } from '../middleware/auth';
 import { validate, validateRequest } from '../middleware/validate';
+import { asyncHandler } from '../middleware/asyncHandler';
 
 const router = Router();
 
@@ -24,21 +25,21 @@ router.use(authenticate);
  * @desc    Get task statistics for current user
  * @access  Private
  */
-router.get('/stats', getTaskStats);
+router.get('/stats', asyncHandler(getTaskStats));
 
 /**
  * @route   GET /api/tasks
  * @desc    Get all tasks for current user with filtering and pagination
  * @access  Private
  */
-router.get('/', validate(taskQuerySchema, 'query'), getTasks);
+router.get('/', validate(taskQuerySchema, 'query'), asyncHandler(getTasks));
 
 /**
  * @route   POST /api/tasks
  * @desc    Create a new task
  * @access  Private
  */
-router.post('/', validate(createTaskSchema), createTask);
+router.post('/', validate(createTaskSchema), asyncHandler(createTask));
 
 /**
  * @route   GET /api/tasks/:id
@@ -48,7 +49,7 @@ router.post('/', validate(createTaskSchema), createTask);
 router.get(
   '/:id',
   validateRequest({ params: taskIdSchema }),
-  getTaskById
+  asyncHandler(getTaskById)
 );
 
 /**
@@ -59,7 +60,7 @@ router.get(
 router.put(
   '/:id',
   validateRequest({ params: taskIdSchema, body: updateTaskSchema }),
-  updateTask
+  asyncHandler(updateTask)
 );
 
 /**
@@ -70,7 +71,7 @@ router.put(
 router.delete(
   '/:id',
   validateRequest({ params: taskIdSchema }),
-  deleteTask
+  asyncHandler(deleteTask)
 );
 
 export default router;
