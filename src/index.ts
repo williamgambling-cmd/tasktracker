@@ -11,7 +11,7 @@ async function main(): Promise<void> {
     console.log('✅ Database connected successfully');
 
     // Start server
-    const server = app.listen(env.PORT, () => {
+    const server = app.listen(env.PORT, '0.0.0.0', () => {
       console.log(`🚀 Server running on port ${env.PORT}`);
       console.log(`📍 Environment: ${env.NODE_ENV}`);
       console.log(`🔗 Health check: http://localhost:${env.PORT}/health`);
