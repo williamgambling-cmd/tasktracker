@@ -46,8 +46,8 @@ export default function Tasks() {
         tasksApi.getStats(),
       ]);
 
-      setTasks(tasksResponse.data.data);
-      setPagination(tasksResponse.data.pagination);
+      setTasks(tasksResponse.data.data.items);
+      setPagination(tasksResponse.data.data.pagination);
       setStats(statsResponse.data.data);
       setError('');
     } catch (err) {
@@ -95,7 +95,7 @@ export default function Tasks() {
           <h1 className="text-2xl font-bold text-gray-900">My Tasks</h1>
           {stats && (
             <p className="text-sm text-gray-600 mt-1">
-              {stats.byStatus.PENDING || 0} pending, {stats.byStatus.IN_PROGRESS || 0} in progress, {stats.byStatus.COMPLETED || 0} completed
+              {stats.byStatus.pending || 0} pending, {stats.byStatus.inProgress || 0} in progress, {stats.byStatus.completed || 0} completed
             </p>
           )}
         </div>
