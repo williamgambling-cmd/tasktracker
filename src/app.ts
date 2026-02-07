@@ -1,3 +1,4 @@
+import path from 'path';
 import express, { Application } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -9,8 +10,12 @@ import { globalRateLimiter } from './middleware/rateLimit';
 export function createApp(): Application {
   const app = express();
 
-  // Security middleware
-  app.use(helmet());
+  // Security middleware — relax CSP for the React SPA
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+    })
+  );
 
   // CORS configuration
   app.use(
@@ -43,7 +48,20 @@ export function createApp(): Application {
   // API routes
   app.use('/api', routes);
 
-  // 404 handler
+  // Serve React frontend static files
+  const frontendPath = path.join(__dirname, '..', 'public');
+  app.use(express.static(frontendPath));
+
+  // SPA catch-all: serve index.html for any non-API route
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  });
+
+  // 404 handler (only for /api routes that didn't match)
   app.use(notFoundHandler);
 
   // Global error handler

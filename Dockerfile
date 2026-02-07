@@ -1,4 +1,14 @@
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm install
+
+COPY frontend/ ./
+RUN npm run build
+
+FROM node:20-alpine AS backend-builder
 
 RUN apk add --no-cache openssl
 
@@ -27,7 +37,8 @@ COPY prisma ./prisma/
 RUN npm ci --omit=dev
 RUN npx prisma generate
 
-COPY --from=builder /app/dist ./dist
+COPY --from=backend-builder /app/dist ./dist
+COPY --from=frontend-builder /app/frontend/dist ./public
 
 EXPOSE ${PORT:-3000}
 
