@@ -3,7 +3,7 @@ import { z } from 'zod';
 import prisma from '../models/prisma';
 import { sendSuccess, sendCreated, sendNoContent, sendError } from '../utils/response';
 import { NotFoundError, ForbiddenError } from '../middleware/errorHandler';
-import { AuthenticatedRequest, TaskFilterQuery, PaginatedResponse } from '../types';
+import { AuthenticatedRequest, PaginatedResponse } from '../types';
 import { Task, TaskStatus, Priority } from '@prisma/client';
 
 // Validation schemas

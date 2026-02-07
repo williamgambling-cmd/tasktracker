@@ -34,6 +34,7 @@ export async function register(
   next: NextFunction
 ): Promise<void> {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { email, password, name } = req.body as RegisterInput;
 
     // Check if user already exists
@@ -79,6 +80,7 @@ export async function login(
   next: NextFunction
 ): Promise<void> {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const { email, password } = req.body as LoginInput;
 
     // Find user
@@ -171,10 +173,12 @@ export async function updateProfile(
       return;
     }
 
-    const { name } = req.body;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    const { name } = req.body as { name: string };
 
     const user = await prisma.user.update({
       where: { id: req.user.userId },
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       data: { name },
       select: {
         id: true,
