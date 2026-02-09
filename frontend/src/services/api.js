@@ -57,6 +57,12 @@ export const tasksApi = {
   update: (id, data) => api.put(`/tasks/${id}`, data),
   delete: (id) => api.delete(`/tasks/${id}`),
   getStats: () => api.get('/tasks/stats'),
+  sendSummary: () => api.post('/tasks/summary'),
+};
+
+// Features API
+export const featuresApi = {
+  getAll: () => api.get('/features'),
 };
 
 export default api;

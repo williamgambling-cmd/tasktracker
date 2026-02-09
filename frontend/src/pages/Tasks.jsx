@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { tasksApi } from '../services/api';
+import { tasksApi, featuresApi } from '../services/api';
 import TaskCard from '../components/TaskCard';
 
 const STATUS_OPTIONS = [
@@ -27,6 +27,9 @@ export default function Tasks() {
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState(null);
+  const [slackEnabled, setSlackEnabled] = useState(false);
+  const [sendingToSlack, setSendingToSlack] = useState(false);
+  const [slackMessage, setSlackMessage] = useState('');
 
   const fetchTasks = async () => {
     try {
@@ -61,6 +64,12 @@ export default function Tasks() {
     fetchTasks();
   }, [statusFilter, priorityFilter, page]);
 
+  useEffect(() => {
+    featuresApi.getAll()
+      .then((res) => setSlackEnabled(res.data.data.slack))
+      .catch(() => setSlackEnabled(false));
+  }, []);
+
   const handleSearch = (e) => {
     e.preventDefault();
     setPage(1);
@@ -87,6 +96,20 @@ export default function Tasks() {
     }
   };
 
+  const handleSendToSlack = async () => {
+    setSendingToSlack(true);
+    setSlackMessage('');
+    try {
+      await tasksApi.sendSummary();
+      setSlackMessage('Summary sent to Slack!');
+      setTimeout(() => setSlackMessage(''), 3000);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to send summary to Slack');
+    } finally {
+      setSendingToSlack(false);
+    }
+  };
+
   return (
     <div>
       {/* Header */}
@@ -99,16 +122,37 @@ export default function Tasks() {
             </p>
           )}
         </div>
-        <Link
-          to="/tasks/new"
-          className="inline-flex items-center justify-center bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors"
-        >
-          <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          New Task
-        </Link>
+        <div className="flex gap-2">
+          {slackEnabled && (
+            <button
+              onClick={handleSendToSlack}
+              disabled={sendingToSlack}
+              className="inline-flex items-center justify-center bg-gray-700 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M5.042 15.165a2.528 2.528 0 0 1-2.52 2.523A2.528 2.528 0 0 1 0 15.165a2.527 2.527 0 0 1 2.522-2.52h2.52v2.52zm1.271 0a2.527 2.527 0 0 1 2.521-2.52 2.527 2.527 0 0 1 2.521 2.52v6.313A2.528 2.528 0 0 1 8.834 24a2.528 2.528 0 0 1-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 0 1-2.521-2.52A2.528 2.528 0 0 1 8.834 0a2.528 2.528 0 0 1 2.521 2.522v2.52H8.834zm0 1.271a2.528 2.528 0 0 1 2.521 2.521 2.528 2.528 0 0 1-2.521 2.521H2.522A2.528 2.528 0 0 1 0 8.834a2.528 2.528 0 0 1 2.522-2.521h6.312zm10.122 2.521a2.528 2.528 0 0 1 2.522-2.521A2.528 2.528 0 0 1 24 8.834a2.528 2.528 0 0 1-2.522 2.521h-2.522V8.834zm-1.268 0a2.528 2.528 0 0 1-2.523 2.521 2.527 2.527 0 0 1-2.52-2.521V2.522A2.527 2.527 0 0 1 15.165 0a2.528 2.528 0 0 1 2.523 2.522v6.312zm-2.523 10.122a2.528 2.528 0 0 1 2.523 2.522A2.528 2.528 0 0 1 15.165 24a2.527 2.527 0 0 1-2.52-2.522v-2.522h2.52zm0-1.268a2.527 2.527 0 0 1-2.52-2.523 2.526 2.526 0 0 1 2.52-2.52h6.313A2.527 2.527 0 0 1 24 15.165a2.528 2.528 0 0 1-2.522 2.523h-6.313z"/>
+              </svg>
+              {sendingToSlack ? 'Sending...' : 'Send to Slack'}
+            </button>
+          )}
+          <Link
+            to="/tasks/new"
+            className="inline-flex items-center justify-center bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            New Task
+          </Link>
+        </div>
       </div>
+
+      {/* Slack success message */}
+      {slackMessage && (
+        <div className="bg-green-50 text-green-700 px-4 py-3 rounded-lg mb-6">
+          {slackMessage}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">

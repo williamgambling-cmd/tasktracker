@@ -6,6 +6,7 @@ import {
   updateTask,
   deleteTask,
   getTaskStats,
+  sendTaskSummary,
   createTaskSchema,
   updateTaskSchema,
   taskQuerySchema,
@@ -26,6 +27,13 @@ router.use(authenticate);
  * @access  Private
  */
 router.get('/stats', asyncHandler(getTaskStats));
+
+/**
+ * @route   POST /api/tasks/summary
+ * @desc    Send task summary to Slack
+ * @access  Private
+ */
+router.post('/summary', asyncHandler(sendTaskSummary));
 
 /**
  * @route   GET /api/tasks

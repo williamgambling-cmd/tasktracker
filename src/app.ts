@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import { env } from './utils/env';
 import routes from './routes';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { isSlackEnabled } from './utils/slack';
 import { globalRateLimiter } from './middleware/rateLimit';
 
 export function createApp(): Application {
@@ -42,6 +43,16 @@ export function createApp(): Application {
       message: 'Server is healthy',
       timestamp: new Date().toISOString(),
       environment: env.NODE_ENV,
+    });
+  });
+
+  // Feature flags endpoint
+  app.get('/api/features', (_req, res) => {
+    res.json({
+      success: true,
+      data: {
+        slack: isSlackEnabled(),
+      },
     });
   });
 

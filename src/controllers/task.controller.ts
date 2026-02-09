@@ -2,7 +2,8 @@ import { Response, NextFunction } from 'express';
 import { z } from 'zod';
 import prisma from '../models/prisma';
 import { sendSuccess, sendCreated, sendNoContent, sendError } from '../utils/response';
-import { NotFoundError, ForbiddenError } from '../middleware/errorHandler';
+import { NotFoundError, ForbiddenError, BadRequestError } from '../middleware/errorHandler';
+import { isSlackEnabled, postToSlack, buildSummaryBlocks } from '../utils/slack';
 import { AuthenticatedRequest, PaginatedResponse } from '../types';
 import { Task, TaskStatus, Priority } from '@prisma/client';
 
@@ -287,6 +288,75 @@ export async function getTaskStats(
     };
 
     sendSuccess(res, stats);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function sendTaskSummary(
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      sendError(res, 'User not authenticated', 401);
+      return;
+    }
+
+    if (!isSlackEnabled()) {
+      throw new BadRequestError('Slack integration is not enabled');
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.userId },
+      select: { name: true, email: true },
+    });
+
+    const [statusCounts, priorityCounts, total, openTasks, completedTasks] = await Promise.all([
+      prisma.task.groupBy({
+        by: ['status'],
+        where: { userId: req.user.userId },
+        _count: true,
+      }),
+      prisma.task.groupBy({
+        by: ['priority'],
+        where: { userId: req.user.userId },
+        _count: true,
+      }),
+      prisma.task.count({ where: { userId: req.user.userId } }),
+      prisma.task.findMany({
+        where: { userId: req.user.userId, status: { in: ['PENDING', 'IN_PROGRESS'] } },
+        select: { title: true, priority: true, status: true },
+        orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
+      }),
+      prisma.task.findMany({
+        where: { userId: req.user.userId, status: 'COMPLETED' },
+        select: { title: true, priority: true },
+        orderBy: { updatedAt: 'desc' },
+        take: 5,
+      }),
+    ]);
+
+    const stats = {
+      total,
+      byStatus: {
+        pending: statusCounts.find((s) => s.status === 'PENDING')?._count ?? 0,
+        inProgress: statusCounts.find((s) => s.status === 'IN_PROGRESS')?._count ?? 0,
+        completed: statusCounts.find((s) => s.status === 'COMPLETED')?._count ?? 0,
+      },
+      byPriority: {
+        low: priorityCounts.find((p) => p.priority === 'LOW')?._count ?? 0,
+        medium: priorityCounts.find((p) => p.priority === 'MEDIUM')?._count ?? 0,
+        high: priorityCounts.find((p) => p.priority === 'HIGH')?._count ?? 0,
+      },
+    };
+
+    const userName = user?.name ?? req.user.email;
+    const blocks = buildSummaryBlocks(userName, stats, openTasks, completedTasks);
+    await postToSlack(blocks, `Task summary from ${userName}`);
+
+    sendSuccess(res, { sent: true }, 'Summary sent to Slack');
   } catch (error) {
     next(error);
   }

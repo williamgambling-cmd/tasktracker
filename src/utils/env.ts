@@ -13,6 +13,9 @@ const envSchema = z.object({
   RATE_LIMIT_WINDOW_MS: z.string().transform(Number).default('900000'),
   RATE_LIMIT_MAX_REQUESTS: z.string().transform(Number).default('100'),
   BCRYPT_SALT_ROUNDS: z.string().transform(Number).default('12'),
+  SLACK_ENABLED: z.string().default('false'),
+  SLACK_BOT_TOKEN: z.string().default(''),
+  SLACK_CHANNEL_ID: z.string().default(''),
 });
 
 const parsedEnv = envSchema.safeParse(process.env);
